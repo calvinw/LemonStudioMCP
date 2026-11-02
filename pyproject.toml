@@ -1,7 +1,7 @@
 [project]
 name = "lemon-studio-mcp"
 version = "0.1.0"
-description = "MCP server for Lemon Studio: drives the app directly over its JSON-RPC control socket (no file bus, no keystrokes)."
+description = "MCP server for Lemon Studio: drives the app over its JSON-RPC control socket."
 requires-python = ">=3.10"
 readme = "README.md"
 license = { text = "MIT" }

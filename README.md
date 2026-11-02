@@ -3,19 +3,30 @@
 An MCP server that lets Claude (or any MCP client) make music in
 [Lemon Studio](https://github.com/ItsAlphaNeon/Lemon-Studio), the open-source FL Studio-style DAW written in Rust.
 
-It follows [MacFLStudioMCP](https://github.com/calvinw/MacFLStudioMCP), but talks to the app **directly**. On the
-Mac, FL Studio's Python blocks sockets, so MacFLStudioMCP goes through JSON files, an IAC MIDI port, a piano-roll
-script and a `Cmd+Opt+Y` keystroke. Lemon Studio has a control socket built in, so this server sends each request
-straight to the app and reads the answer on the same connection:
+## How it works
+
+Lemon Studio has a built-in control plane: started with `--control <socket>`, it listens on a local Unix socket and
+answers JSON-RPC 2.0 requests, one per line. This server is an MCP front end for that socket:
 
 ```
 Claude ──MCP──▶ lemon-studio-mcp ──JSON-RPC over /tmp/lemon.sock──▶ Lemon Studio
 ```
 
-Nothing to install inside the app, no MIDI setup, no Accessibility permission, no polling.
+- **Reading.** `get_project_state` returns the whole project in one call: tempo, channels, mixer tracks, patterns and
+  the playlist. Everything has a stable id that stays the same when other things are added, moved or deleted, and
+  every other tool refers to things by those ids.
+- **Editing.** Each edit tool sends one `apply` request of one or more commands (`set_notes`, `add_channel`,
+  `add_clip`, …). Lemon Studio applies the batch all or nothing and records it as **one undo step** named after the
+  client ("Claude: Write notes"), so you can undo it with Cmd+Z like any edit of your own.
+- **Units.** Tools take positions and lengths in beats and convert them to ticks with the project's `ppq`. Notes are
+  MIDI numbers (60 = middle C).
+- **Playing.** `play`, `pause` and `stop` drive the transport the same way the toolbar buttons do.
+- **Changes from the app.** `get_changes` lists what changed since a given point, including your own edits in the
+  window, so Claude can catch up on what you did.
+- **Errors.** When Lemon Studio refuses a command ("no pattern 99999"), the message comes back to Claude as a tool
+  error.
 
-Every edit is **one undo step** named after the client ("Claude: Write notes"), so you can undo it with Cmd+Z, and a
-batch of commands is applied all or nothing.
+Nothing needs installing inside the app: the control plane is part of Lemon Studio.
 
 ## Requirements
 
@@ -55,7 +66,7 @@ Lemon Trio bass line and play it."*
 
 ### Claude.ai (remote connector)
 
-As with MacFLStudioMCP, run the server over HTTP and tunnel it:
+Run the server over HTTP and expose it through a tunnel:
 
 ```bash
 .venv/bin/python -m lemon_studio_mcp --transport http --port 8000 --host 0.0.0.0
@@ -95,14 +106,6 @@ To have every change confirmed in the app, start Lemon Studio with `--control-le
 Positions and lengths are in beats by default (`unit="ticks"` for raw ticks). Note keys are MIDI numbers, 60 =
 middle C.
 
-## How the MacFLStudioMCP pieces map
-
-| MacFLStudioMCP | Here |
-|---|---|
-| `bridge_client.py` (file bus, 20 ms polling) | `client.py` (one socket, request/answer per line) |
-| `device_FLStudioMCP.py` in FL's Hardware folder, IAC Driver port | nothing: the control plane is part of the app |
-| `ComposeWithLLM.pyscript` + `keystroke.py` (Cmd+Opt+Y) for notes | `set_notes` / `add_notes` commands |
-| per-call FL API wrappers | `state` once, then commands by stable id |
 
 ## Lemon Studio changes
 

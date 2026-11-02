@@ -82,10 +82,9 @@ tested yet. Start Lemon Studio with `--control-level propose` to make every chan
 
 ## How hard it was
 
-Not very. MacFLStudioMCP needs a file bus, an IAC MIDI port, a piano-roll script and a `Cmd+Opt+Y` keystroke because
-FL Studio's Python on macOS cannot open sockets. Lemon Studio has a socket protocol built in, so the server is a thin
-client over it (about 500 lines of Python), and the Lemon Studio side is about 90 lines of Rust plus tests. Most of
-the work was mapping tools onto commands and testing against the real app.
+Not very. Lemon Studio has a socket protocol built in, so the server is a thin client over it (about 500 lines of
+Python), and the Lemon Studio side is about 90 lines of Rust plus tests. Most of the work was mapping tools onto
+commands and testing against the real app.
 
 What took extra care:
 
