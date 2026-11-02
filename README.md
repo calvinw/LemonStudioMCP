@@ -40,7 +40,8 @@ Nothing needs installing inside the app: the control plane is part of Lemon Stud
   cd Lemon-Studio && cargo build -p os-app --release
   ```
 
-  Upstream Lemon Studio works too, without the transport tools (`play`, `pause`, `stop`, `transport_status`).
+  Upstream Lemon Studio works too, without the transport and view tools (`play`, `pause`, `stop`,
+  `transport_status`, `select`).
 
 ## Install
 
@@ -100,7 +101,7 @@ To have every change confirmed in the app, start Lemon Studio with `--control-le
 | Patterns, playlist | `add_pattern`, `set_pattern`, `delete_pattern`, `place_pattern`, `set_clip`, `delete_clip` |
 | Mixer, plugins | `add_mixer_track`, `set_mixer_track`, `route_mixer`, `set_eq`, `add_effect`, `set_effect`, `remove_effect`, `set_plugin_param` |
 | Project | `set_tempo`, `set_time_signature`, `set_project_settings`, `save_project`, `render_project` |
-| Transport | `play`, `pause`, `stop`, `transport_status` |
+| Transport, view | `play`, `pause`, `stop`, `transport_status`, `select` (show a pattern and channel in the piano roll) |
 | Undo, raw | `undo`, `redo`, `apply_commands`, `propose_commands` |
 
 Positions and lengths are in beats by default (`unit="ticks"` for raw ticks). Note keys are MIDI numbers, 60 =
@@ -109,7 +110,8 @@ middle C.
 
 ## Lemon Studio changes
 
-The control plane had no transport control. Four methods were added to Lemon Studio in the
+The control plane had no transport control and no way to change what the window shows. Five methods were added to
+Lemon Studio in the
 [`control-plane-transport`](https://github.com/calvinw/Lemon-Studio/tree/control-plane-transport) branch of the fork
 (`crates/os-app/src/control/rpc.rs`, with tests, documented in `docs/control-plane.md`). They are not yet proposed
 upstream.
@@ -119,6 +121,7 @@ upstream.
 | `transport` | read | state (playing / paused / stopped), mode, current pattern, position, ppq, bpm |
 | `play` | edit | `mode`, `pattern`, `from` optional; as the Play button |
 | `pause`, `stop` | edit | as the Pause and Stop buttons |
+| `select` | edit | `pattern`, `channel`, `piano_roll` optional; makes the pattern current, selects the channel, opens the piano roll scrolled to its notes |
 
 ## Not yet
 
@@ -128,8 +131,6 @@ fields beyond key/velocity/pan, rendering the open project without saving it fir
 
 Found while using it:
 
-- **No way to select a pattern or channel.** `play(pattern=...)` followed by `stop` makes a pattern current; nothing
-  chooses the channel the piano roll shows. A `select` method is the next thing to add.
 - **No presets.** Instrument sounds are picked by hand in each plugin's window.
 
 ## Development

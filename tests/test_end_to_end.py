@@ -101,6 +101,13 @@ def test_build_a_beat_and_play_it(lemon_socket):
         assert (t["state"], t["mode"]) == ("playing", "song")
         assert (await call("stop"))["state"] == "stopped"
 
+        # select shows a pattern and channel without touching the music or the history.
+        steps = len((await call("get_history"))["steps"])
+        shown = await call("select", pattern=pat, channel=ch, piano_roll=True)
+        assert shown == {"pattern": pat, "channel": ch, "piano_roll": True}, shown
+        assert len((await call("get_history"))["steps"]) == steps
+        assert (await call("transport_status"))["state"] == "stopped"
+
         assert (await call("undo"))["step"] == "Test: place pattern"
         state = await call("get_project_state")
         assert not any(c["id"] == clip for c in (state["playlist"] or {}).get("clips", []))

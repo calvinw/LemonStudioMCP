@@ -30,7 +30,7 @@ Pushing Lemon Studio work: `git push fork control-plane-transport`. Picking up u
 
 Lemon Studio already has a control plane: JSON-RPC 2.0 over a local socket (`--control <socket>` beside the window,
 `--serve <socket>` without one), documented in its `docs/control-plane.md`. Clients could edit a project but could not
-play it. The branch adds four methods to `crates/os-app/src/control/rpc.rs`:
+play it or show it. The branch adds five methods to `crates/os-app/src/control/rpc.rs`:
 
 | Method | Level | Does |
 |---|---|---|
@@ -38,12 +38,14 @@ play it. The branch adds four methods to `crates/os-app/src/control/rpc.rs`:
 | `play` | edit | as the Play button (resumes when paused); optional `mode`, `pattern` (makes it current), `from` (ticks) |
 | `pause` | edit | as the Pause button |
 | `stop` | edit | as the Stop button (rewinds to where playback started) |
+| `select` | edit | optional `pattern` (made current), `channel` (selected), `piano_roll` (true opens, false closes); scrolls the piano roll to the channel's notes |
 
-They go through the same `App::act(Action::Play / Stop / PatSong)` paths as the toolbar, make no undo step and no
-event. Tests in `crates/os-app/src/control/tests.rs`:
+The transport methods go through the same `App::act(Action::Play / Stop / PatSong)` paths as the toolbar. `select`
+uses the pattern picker's `patterns::select`, the channel rack's `focus_channel` and the piano roll's `center_keys`,
+and checks every id before changing anything. None of them makes an undo step or an event. Tests in `crates/os-app/src/control/tests.rs`:
 
 ```bash
-cargo test -p os-app --release --bin lemonstudio control::                                  # includes the new read/refuse test
+cargo test -p os-app --release --bin lemonstudio control::                                  # includes the transport and select tests
 cargo test -p os-app --release --bin lemonstudio clients_play_pause_and_stop -- --ignored    # needs an audio device
 ```
 
@@ -99,10 +101,8 @@ What took extra care:
 
 Found while making music with it:
 
-- **No `select` method.** Nothing sets the current pattern or the piano roll's channel without playing:
-  `play(pattern=…)` then `stop` is the workaround (it also switches to PAT mode). This caused repeated "where are my
-  notes?" confusion — the piano roll shows one channel in the current pattern. **Next thing to add**, as a
-  control-plane method plus a tool.
+- **The piano roll shows one channel in the current pattern**, which caused repeated "where are my notes?"
+  confusion before `select` existed. The server's instructions now tell Claude to `select` what it just wrote.
 - **No presets.** Plugin presets can't be loaded over the control plane; sounds are chosen by hand.
 - **No view of the screen.** The tools can't see what the user sees (scroll position, open windows).
 - From Lemon Studio's own "Not yet" list: automation clips, markers, channel envelopes, note fields beyond
@@ -110,7 +110,6 @@ Found while making music with it:
 
 ## Next steps
 
-1. Add `select` (current pattern, selected channel, open piano roll) to the fork and a matching tool here.
-2. Test the Claude.ai path through the tunnel.
-3. When the transport and select methods have settled, open a pull request from `calvinw/Lemon-Studio:control-plane-transport`
+1. Test the Claude.ai path through the tunnel.
+2. When the transport and select methods have settled, open a pull request from `calvinw/Lemon-Studio:control-plane-transport`
    to `ItsAlphaNeon/Lemon-Studio`.

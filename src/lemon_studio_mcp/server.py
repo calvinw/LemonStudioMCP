@@ -42,6 +42,9 @@ How the project works:
   or with a sample file. A channel added with neither is an empty sampler and plays nothing.
 - A song is patterns placed in the playlist (place_pattern). play(mode="pattern") loops the current pattern;
   play(mode="song") plays the playlist.
+- The piano roll shows ONE channel in the CURRENT pattern. After writing notes the user should look at, call
+  select(pattern=..., channel=..., piano_roll=True) so they are on screen (it also scrolls to them). Use select, not
+  play/stop, to change the current pattern.
 - Every edit tool is one undo step named after this client; the user can undo it with Cmd+Z. apply_commands runs
   several raw commands as one step, all or nothing.
 If a call says Lemon Studio is not listening, call lemon_launch.
@@ -369,6 +372,14 @@ def build_app() -> MCPServer:
     def stop() -> dict:
         """Stop playback and rewind to where it started."""
         return client.call("stop")
+
+    @mcp.tool()
+    def select(pattern: int | None = None, channel: int | None = None, piano_roll: bool | None = None) -> dict:
+        """Change what the user sees, not the music: make `pattern` (an id) the current pattern, select `channel` (an
+        id) in the channel rack, and with piano_roll=True open the piano roll on them (False closes it). While the
+        piano roll is shown it scrolls to the channel's notes. No undo step. Use it after writing notes so the user
+        sees them."""
+        return client.call("select", pattern=pattern, channel=channel, piano_roll=piano_roll)
 
     @mcp.tool()
     def transport_status(unit: Unit = "beats") -> dict:
