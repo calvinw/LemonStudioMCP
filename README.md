@@ -129,6 +129,11 @@ Found while using it:
   chooses the channel the piano roll shows. A `select` method is the next thing to add.
 - **No presets.** Instrument sounds are picked by hand in each plugin's window.
 
+## Development
+
+[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) covers both repositories and the fork branch, the local clone setup, the
+Lemon Studio change in detail, how the server is built, known gaps, and next steps.
+
 ## Tests
 
 ```bash
